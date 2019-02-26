@@ -7,8 +7,8 @@ require 'elgar/version'
 Gem::Specification.new do |gem|
   gem.name          = "elgar"
   gem.version       = Elgar::VERSION
-  gem.summary       = %q{TODO: Summary}
-  gem.description   = %q{TODO: Description}
+  gem.summary       = %q{graph sheet}
+  gem.description   = %q{graph with spreadsheets at nodes}
   gem.license       = "MIT"
   gem.authors       = ["Joseph Weissman"]
   gem.email         = "jweissman@pivotal.io"
