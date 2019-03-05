@@ -93,7 +93,7 @@ describe Elgar do
     end
   end
 
-  xdescribe Formula do
+  describe Formula do
     it 'computes simple arith' do
       fake_sheet = double(Sheet)
       fx = Formula.from_expression('=1+2')
@@ -113,7 +113,16 @@ describe Elgar do
       expect(sheet.read('A1')).to eq('hello')
     end
 
-    xit 'computes a formula' do
+    # need literal ids to make it out of parsing...
+    xit 'computes a simple formula' do
+      sheet = Sheet.new('felix')
+      sheet.write('2', at: 'A1')
+      sheet.write('3', at: 'A2')
+      sheet.write('=A1+A2', at: 'A3')
+      expect(sheet.read('A3')).to eq('5')
+    end
+
+    xit 'computes a formula with cell refs and function calls' do
       sheet = Sheet.new('felis cattus')
       sheet.write('name', at: 'A1')
       sheet.write('age', at: 'A2')

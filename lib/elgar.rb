@@ -1,45 +1,17 @@
 require 'elgar/version'
 require 'elgar/tokens'
+require 'elgar/lexer'
 
 module Elgar
-  class Lexer
-    def tokenize(str)
-      tokens = []
-      # consume tokens...
-      scanner = StringScanner.new(str)
-      until scanner.eos?
-        # try to parse!!!
-        if res = scanner.scan(/\d+/)
-          tokens.push(Num[res.to_i])
-        elsif res = scanner.scan(/\w+/)
-          tokens.push(Id[res])
-        elsif res = scanner.scan(/[+*]/)
-          tokens.push(Op[res.to_sym])
-        else
-          raise "Tokenization error in string #{str}: unrecognized character... (at pos=#{scanner.pos})"
-        end
-      end
-      #
-      tokens
-    end
-  end
-
   class TokenStream
     def initialize(tokens:)
-      @original_tokens = tokens
       @tokens = tokens
     end
-
     def peek; @tokens.first end
-    def peek_next; @tokens[1] end
     def consume; @tokens.shift end
-    # def mark; @original_tokens = @tokens; end
-    # def revert; @tokens = @original_tokens; nil; end
   end
 
   module ASTNodes
-    # class Node < Struct.new(:children)
-    # end
     class Int  < Struct.new(:value)
       def inspect; "Int[#{value}]"; end
     end
@@ -79,7 +51,6 @@ module Elgar
         consume # mult
         the_component = Add[left, factor]
       end
-
       the_component || fact
     end
 
@@ -87,24 +58,17 @@ module Elgar
       p :factor
       val = value
       the_factor = nil
-      # if value?
       while peek.is_a?(Op) && peek.value == :*
         left = the_factor || val
         consume # add
         the_factor = Mult[left, value]
       end
-
       the_factor || val
-      # end
     end
 
     def op?
       peek.is_a?(Op)
     end
-
-    # def add_op?
-    #   op? && peek.value == :+
-    # end
 
     def value
       p :value
@@ -123,10 +87,7 @@ module Elgar
       peek.nil?
     end
 
-    # protected
-
     def peek; @stream.peek end
-    def peek_next; @stream.peek_next end
     def consume; @stream.consume end
   end
 
@@ -155,15 +116,29 @@ module Elgar
   end
 
   class Formula
-    # def self.from_expression(input)
-    #   ast = parse(input)
-    #   self.new(ast)
-    # end
+    def initialize(string)
+      @input = string
+      if !@input.start_with?('=')
+        raise "Input string #{string} is not a valid formula! (Formulas start with equals-sign [=])"
+      else
+        # strip out leading =...
+        @input[0] = ''
+      end
+    end
 
-    # # give back AST...
-    # def self.parse(input)
-    #   Parser.new.tree(input)
-    # end
+    def compute(*args)
+      @result ||= calculator.evaluate(@input)
+    end
+
+    def self.from_expression(input_string)
+      new(input_string)
+    end
+
+    private
+
+    def calculator
+      @calc ||= Calculator.new
+    end
   end
 
   class Sheet < Struct.new(:name)
