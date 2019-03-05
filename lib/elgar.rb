@@ -1,12 +1,7 @@
 require 'elgar/version'
+require 'elgar/tokens'
 
 module Elgar
-  module Tokens
-    class Num < Struct.new(:value); end
-    class Op < Struct.new(:value); end
-    class Id < Struct.new(:value); end
-  end
-
   class Lexer
     def tokenize(str)
       tokens = []
@@ -18,7 +13,7 @@ module Elgar
           tokens.push(Num[res.to_i])
         elsif res = scanner.scan(/\w+/)
           tokens.push(Id[res])
-        elsif res = scanner.scan(/[+]/)
+        elsif res = scanner.scan(/[+*]/)
           tokens.push(Op[res.to_sym])
         else
           raise "Tokenization error in string #{str}: unrecognized character... (at pos=#{scanner.pos})"
@@ -29,54 +24,146 @@ module Elgar
     end
   end
 
-  module ASTNodes
-    class Int < Struct.new(:value); end
+  class TokenStream
+    def initialize(tokens:)
+      @original_tokens = tokens
+      @tokens = tokens
+    end
 
-    class Add < Struct.new(:left, :right)
+    def peek; @tokens.first end
+    def peek_next; @tokens[1] end
+    def consume; @tokens.shift end
+    # def mark; @original_tokens = @tokens; end
+    # def revert; @tokens = @original_tokens; nil; end
+  end
+
+  module ASTNodes
+    # class Node < Struct.new(:children)
+    # end
+    class Int  < Struct.new(:value)
+      def inspect; "Int[#{value}]"; end
+    end
+    class Add  < Struct.new(:left, :right)
+      def inspect; "Add[#{left.inspect}, #{right.inspect}]"; end
+    end
+    class Mult < Struct.new(:left, :right)
+      def inspect; "Mult[#{left.inspect}, #{right.inspect}]"; end
     end
   end
 
   class Parser
-    # [ '=', '1', '+', '2' ] => ['+', [ 1, 2 ]]
-    def tree(str)
-      tokens = Lexer.new.tokenize(str)
-      expr(tokens)
+    def initialize(tokens:)
+      @stream = TokenStream.new(tokens: tokens)
     end
 
-    ### expr
+    def recognize
+      expression
+    end
 
-    # def expr
-    #   # do we have val op expr??
-    #   # match(...) / consume(...)
-    #   # Add[1,2]
-    #   [ val, op, expr ]
+    private
+    def expression
+      p :expr
+      result = component || factor || value
+      if !epsilon?
+        raise "Did not fully recognize token stream; parsed: #{result}"
+      end
+      result
+    end
+
+    def component
+      p :component
+      fact = factor
+      the_component = nil
+      while peek.is_a?(Op) && peek.value == :+
+        left = the_component || fact
+        consume # mult
+        the_component = Add[left, factor]
+      end
+
+      the_component || fact
+    end
+
+    def factor
+      p :factor
+      val = value
+      the_factor = nil
+      # if value?
+      while peek.is_a?(Op) && peek.value == :*
+        left = the_factor || val
+        consume # add
+        the_factor = Mult[left, value]
+      end
+
+      the_factor || val
+      # end
+    end
+
+    def op?
+      peek.is_a?(Op)
+    end
+
+    # def add_op?
+    #   op? && peek.value == :+
     # end
 
-    # def val #(tkns)
-    #   num #(tkns)
-    #   # if tkns.
-    # end
+    def value
+      p :value
+      if value?
+        Int[consume.value]
+      else
+        raise "Expected number but got #{peek}"
+      end
+    end
 
-    # # just give back Int?
-    # def num(tkns)
-    #   tkns.first.is_a?(Num) && Int[tkns.pop.value]
-    # end
+    def value?
+      peek.is_a?(Num)
+    end
 
-    # todo -- test and implement these???
-    def peek; end
-    def consume; end
+    def epsilon?
+      peek.nil?
+    end
+
+    # protected
+
+    def peek; @stream.peek end
+    def peek_next; @stream.peek_next end
+    def consume; @stream.consume end
+  end
+
+  class Calculator
+    def evaluate(str)
+      tokens = Lexer.new.tokenize(str)
+      tree = Parser.new(tokens: tokens).recognize
+      reduce(tree).to_s
+    end
+
+    private
+
+    def reduce(ast)
+      puts "===> WOULD REDUCE AST: #{ast}"
+      case ast
+      when Add then
+        reduce(ast.left) + reduce(ast.right) #.value.to_i
+      when Mult then
+        reduce(ast.left) * reduce(ast.right)
+      when Int then
+        ast.value.to_i
+      else
+        raise "Not sure what to do with node #{ast}"
+      end
+    end
   end
 
   class Formula
-    def self.from_expression(input)
-      ast = parse(input)
-      self.new(ast)
-    end
+    # def self.from_expression(input)
+    #   ast = parse(input)
+    #   self.new(ast)
+    # end
 
-    # give back AST...
-    def self.parse(input)
-      Parser.new.tree(input)
-    end
+    # # give back AST...
+    # def self.parse(input)
+    #   Parser.new.tree(input)
+    # end
   end
 
   class Sheet < Struct.new(:name)
@@ -95,7 +182,7 @@ module Elgar
       return value
     end
 
-  private
+    private
 
     def database
       @store ||= {}

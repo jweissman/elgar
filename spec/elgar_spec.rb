@@ -16,11 +16,80 @@ describe Elgar do
     end
   end
 
+  describe TokenStream do
+    it 'peeks/consumes' do
+      tkns = TokenStream.new(tokens: ['hello', 'world'])
+      expect(tkns.peek).to eq('hello')
+      expect(tkns.consume).to eq('hello')
+      expect(tkns.peek).to eq('world')
+    end
+  end
+
   describe Parser do
-    xit 'assembles ast' do
-      parser = Parser.new
-      expect(parser.tree('1+2')).to eq(Add[1,2])
-      expect(parser.tree('1+2+3')).to eq(Add[Add[1,2],3])
+
+
+    describe 'assembles ast from tokens' do
+      it 'recognizes a single number' do
+        parser = Parser.new(tokens: [
+          Num[1]
+        ])
+        expect(parser.recognize).to eq(Int[1])
+      end
+
+      it 'recognizes a simple add operation' do
+        parser = Parser.new(tokens: [ Num[1], Op[:+], Num[2] ])
+        expect(parser.recognize).to eq(
+          Add[Int[1], Int[2]]
+        )
+      end
+
+      it 'recognizes repeated addition' do
+        parser = Parser.new(tokens: [
+          Num[1], Op[:+], Num[2], Op[:+], Num[3]
+        ])
+        expect(parser.recognize).to eq(
+          Add[
+            Add[Int[1], Int[2]],
+            Int[3],
+          ]
+        )
+      end
+
+      it 'orders operators by precedence' do
+        parser = Parser.new(
+          tokens: [
+            Num[1], Op[:+], Num[2], Op[:*], Num[3]
+          ]
+        )
+        expect(parser.recognize).to eq(
+          Add[
+            Int[1],
+            Mult[Int[2], Int[3]]
+          ]
+        )
+      end
+
+      it 'really orders by precedence though' do
+        parser = Parser.new(
+          tokens: [
+            Num[1], Op[:*], Num[2], Op[:+], Num[3]
+          ]
+        )
+        expect(parser.recognize).to eq(
+          Add[
+            Mult[Int[1], Int[2]],
+            Int[3],
+          ]
+        )
+      end
+    end
+  end
+
+  describe Calculator do
+    it 'calculates simple operations' do
+      calc = Calculator.new
+      expect(calc.evaluate('1+2')).to eq('3')
+      expect(calc.evaluate('1+2*3')).to eq('7')
     end
   end
 
