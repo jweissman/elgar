@@ -127,7 +127,7 @@ describe Elgar do
     end
 
     # literal ids should NOW make it out of parsing...
-    xit 'computes a simple formula with cell refs' do
+    it 'computes a simple formula with cell refs' do
       sheet = Sheet.new('felix')
       sheet.write('2', at: 'A1')
       sheet.write('3', at: 'A2')

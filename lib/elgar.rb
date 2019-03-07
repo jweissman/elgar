@@ -122,14 +122,15 @@ module Elgar
       puts "===> WOULD REDUCE AST #{ast} IN CTX #{ctx}"
       case ast
       when Add then
-        reduce(ast.left, ctx) + reduce(ast.right, ctx) #.value.to_i
+        reduce(ast.left, ctx).to_i + reduce(ast.right, ctx).to_i
       when Mult then
-        reduce(ast.left, ctx) * reduce(ast.right, ctx)
+        reduce(ast.left, ctx).to_i * reduce(ast.right, ctx).to_i
       when Int then
         ast.value.to_i
       when CellRef then
         # p ctx: ctx
-        raise "Implement reduce[CellRef]"
+        # raise "Implement reduce[CellRef]"
+        ctx.read([ast.column, ast.row].join)
       else
         raise "Not sure what to do with node #{ast}"
       end
