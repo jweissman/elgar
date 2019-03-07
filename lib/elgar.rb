@@ -12,6 +12,9 @@ module Elgar
   end
 
   module ASTNodes
+    class CellRef < Struct.new(:row, :column)
+      def inspect; "Cell[@#{row}/#{column}]"; end
+    end
     class Int  < Struct.new(:value)
       def inspect; "Int[#{value}]"; end
     end
@@ -72,15 +75,29 @@ module Elgar
 
     def value
       p :value
-      if value?
-        Int[consume.value]
+      val = nil
+      if num?
+        val = consume.value
+        Int[val]
+      elsif ident?
+        val = consume.value
+        CellRef[val]
       else
-        raise "Expected number but got #{peek}"
+        val = peek
+        raise "Expected number/id but got #{val} [#{val.inspect} (#{val.class.name})]"
       end
     end
 
     def value?
+      num? || ident?
+    end
+
+    def num?
       peek.is_a?(Num)
+    end
+
+    def ident?
+      peek.is_a?(Id)
     end
 
     def epsilon?
@@ -92,23 +109,27 @@ module Elgar
   end
 
   class Calculator
-    def evaluate(str)
+    def evaluate(str, ctx={})
       tokens = Lexer.new.tokenize(str)
       tree = Parser.new(tokens: tokens).recognize
-      reduce(tree).to_s
+      reduce(tree, ctx).to_s
     end
 
     private
 
-    def reduce(ast)
-      puts "===> WOULD REDUCE AST: #{ast}"
+    def reduce(ast, ctx={})
+      p :reduce, ctx: ctx
+      puts "===> WOULD REDUCE AST #{ast} IN CTX #{ctx}"
       case ast
       when Add then
-        reduce(ast.left) + reduce(ast.right) #.value.to_i
+        reduce(ast.left, ctx) + reduce(ast.right, ctx) #.value.to_i
       when Mult then
-        reduce(ast.left) * reduce(ast.right)
+        reduce(ast.left, ctx) * reduce(ast.right, ctx)
       when Int then
         ast.value.to_i
+      when CellRef then
+        # p ctx: ctx
+        raise "Implement reduce[CellRef]"
       else
         raise "Not sure what to do with node #{ast}"
       end
@@ -126,8 +147,10 @@ module Elgar
       end
     end
 
-    def compute(*args)
-      @result ||= calculator.evaluate(@input)
+    def compute(ctx)
+      p :compute, ctx: ctx
+      # @result ||=
+        calculator.evaluate(@input, ctx)
     end
 
     def self.from_expression(input_string)
@@ -153,8 +176,9 @@ module Elgar
       if value.start_with?('=')
         # raise "Would compute formula: #{value}"
         compute_formula(value)
+      else
+        value
       end
-      return value
     end
 
     private

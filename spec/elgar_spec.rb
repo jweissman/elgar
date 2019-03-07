@@ -36,6 +36,13 @@ describe Elgar do
         expect(parser.recognize).to eq(Int[1])
       end
 
+      it 'recognizes a literal identifier' do
+        parser = Parser.new(tokens: [
+          Id['xyz']
+        ])
+        expect(parser.recognize).to eq(CellRef['xyz'])
+      end
+
       it 'recognizes a simple add operation' do
         parser = Parser.new(tokens: [ Num[1], Op[:+], Num[2] ])
         expect(parser.recognize).to eq(
@@ -113,8 +120,14 @@ describe Elgar do
       expect(sheet.read('A1')).to eq('hello')
     end
 
-    # need literal ids to make it out of parsing...
-    xit 'computes a simple formula' do
+    it 'computes a standalone formula' do
+      sheet = Sheet.new('the cat')
+      sheet.write('=1+2', at: 'A1')
+      expect(sheet.read('A1')).to eq('3')
+    end
+
+    # literal ids should NOW make it out of parsing...
+    xit 'computes a simple formula with cell refs' do
       sheet = Sheet.new('felix')
       sheet.write('2', at: 'A1')
       sheet.write('3', at: 'A2')
