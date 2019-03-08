@@ -8,6 +8,7 @@ module Elgar
       @tokens = tokens
     end
     def peek; @tokens.first end
+    def peek_next; @tokens[1] end
     def consume; @tokens.shift end
   end
 
@@ -24,6 +25,9 @@ module Elgar
     class Mult < Struct.new(:left, :right)
       def inspect; "Mult[#{left.inspect}, #{right.inspect}]"; end
     end
+
+    class Arglist < Struct.new(:args); end
+    class Funcall < Struct.new(:func, :arglist); end
   end
 
   class Parser
@@ -43,6 +47,36 @@ module Elgar
         raise "Did not fully recognize token stream; parsed: #{result}"
       end
       result
+    end
+
+    def funcall
+      p :funcall
+      if ident? && peek_next.is_a?(LParen)
+        # found an id, we need arglist
+        id = consume
+        # if arglist?
+        args = arglist
+        Funcall[id, args]
+        # else
+        #   id
+        # end
+      end
+    end
+
+    def arglist
+      args = []
+      if peek.is_a?(LParen)
+        _lparen = consume
+        args.push(value)
+        while !consume.is_a?(RParen)
+          args.push(value)
+          if peek.is_a?(Comma)
+            _comma = consume
+          end
+        end
+        # _rparen = consume
+        Arglist[args]
+      end
     end
 
     def component
@@ -80,8 +114,13 @@ module Elgar
         val = consume.value
         Int[val.to_i]
       elsif ident?
-        val = consume.value
-        CellRef[val]
+        if peek_next.is_a?(LParen) # funcall?
+          funcall
+        else
+          # assume cell ref??
+          val = consume.value
+          CellRef[val]
+        end
       else
         val = peek
         raise "Expected number/id but got #{val} [#{val.inspect} (#{val.class.name})]"
@@ -105,6 +144,7 @@ module Elgar
     end
 
     def peek; @stream.peek end
+    def peek_next; @stream.peek_next end
     def consume; @stream.consume end
   end
 
@@ -151,7 +191,7 @@ module Elgar
     def compute(ctx)
       p :compute, ctx: ctx
       # @result ||=
-        calculator.evaluate(@input, ctx)
+      calculator.evaluate(@input, ctx)
     end
 
     def self.from_expression(input_string)

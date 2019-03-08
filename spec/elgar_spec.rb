@@ -79,6 +79,30 @@ describe Elgar do
           ]
         )
       end
+
+      it 'parses a funcall with a single arg' do
+        parser = Parser.new(
+          tokens: [
+            Id['fun'], LParen['('], Num['1'], RParen[')']
+          ]
+        )
+
+        expect(parser.recognize).to eq(
+          Funcall[ Id['fun'], Arglist[[ Int[1] ]]]
+        )
+      end
+
+      it 'parses a funcall with multiple args' do
+        parser = Parser.new(
+          tokens: [
+            Id['fun'], LParen['('], Num['1'], Comma[','], Num['2'], RParen[')']
+          ]
+        )
+
+        expect(parser.recognize).to eq(
+          Funcall[ Id['fun'], Arglist[[ Int[1], Int[2] ]]]
+        )
+      end
     end
   end
 
@@ -87,6 +111,12 @@ describe Elgar do
       calc = Calculator.new
       expect(calc.evaluate('1+2')).to eq('3')
       expect(calc.evaluate('1+2*3')).to eq('7')
+      expect(calc.evaluate('1*2+3')).to eq('5')
+    end
+
+    xit 'performs funcalls' do
+      calc = Calculator.new
+      expect(calc.evaluate('pow(2,3)')).to eq('8')
     end
   end
 

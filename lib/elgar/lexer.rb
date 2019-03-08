@@ -29,6 +29,7 @@ module Elgar
         /\(/ => LParen,
         /\)/ => RParen,
         /:/ => Colon,
+        /,/ => Comma,
       }
     end
   end

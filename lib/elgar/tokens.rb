@@ -10,5 +10,6 @@ module Elgar
     class LParen < Token; end
     class RParen < Token; end
     class Colon < Token; end
+    class Comma < Token; end
   end
 end

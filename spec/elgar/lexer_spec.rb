@@ -38,12 +38,14 @@ describe Lexer do
     end
 
     it 'tokenizes a funcall with cell range' do
-      expect(lex.tokenize('sum(a1:a2)')).to eq([
+      expect(lex.tokenize('sum(a1:a2,1)')).to eq([
         Id['sum'],
         LParen['('],
         Id['a1'],
         Colon[':'],
         Id['a2'],
+        Comma[','],
+        Num['1'],
         RParen[')'],
       ])
     end
