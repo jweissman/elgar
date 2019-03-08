@@ -5,16 +5,6 @@ include Elgar::Tokens
 include Elgar::ASTNodes
 
 describe Elgar do
-  describe Lexer do
-    it 'tokenizes' do
-      lex = Lexer.new()
-      expect(lex.tokenize('1+a2')).to eq([
-        Num[1],
-        Op[:+],
-        Id['a2']
-      ])
-    end
-  end
 
   describe TokenStream do
     it 'peeks/consumes' do
@@ -31,7 +21,7 @@ describe Elgar do
     describe 'assembles ast from tokens' do
       it 'recognizes a single number' do
         parser = Parser.new(tokens: [
-          Num[1]
+          Num['1']
         ])
         expect(parser.recognize).to eq(Int[1])
       end
@@ -44,7 +34,7 @@ describe Elgar do
       end
 
       it 'recognizes a simple add operation' do
-        parser = Parser.new(tokens: [ Num[1], Op[:+], Num[2] ])
+        parser = Parser.new(tokens: [ Num['1'], Op['+'], Num['2'] ])
         expect(parser.recognize).to eq(
           Add[Int[1], Int[2]]
         )
@@ -52,7 +42,7 @@ describe Elgar do
 
       it 'recognizes repeated addition' do
         parser = Parser.new(tokens: [
-          Num[1], Op[:+], Num[2], Op[:+], Num[3]
+          Num['1'], Op['+'], Num['2'], Op['+'], Num['3']
         ])
         expect(parser.recognize).to eq(
           Add[
@@ -65,7 +55,7 @@ describe Elgar do
       it 'orders operators by precedence' do
         parser = Parser.new(
           tokens: [
-            Num[1], Op[:+], Num[2], Op[:*], Num[3]
+            Num['1'], Op['+'], Num['2'], Op['*'], Num['3']
           ]
         )
         expect(parser.recognize).to eq(
@@ -79,7 +69,7 @@ describe Elgar do
       it 'really orders by precedence though' do
         parser = Parser.new(
           tokens: [
-            Num[1], Op[:*], Num[2], Op[:+], Num[3]
+            Num['1'], Op['*'], Num['2'], Op['+'], Num['3']
           ]
         )
         expect(parser.recognize).to eq(

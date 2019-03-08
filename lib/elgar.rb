@@ -49,7 +49,7 @@ module Elgar
       p :component
       fact = factor
       the_component = nil
-      while peek.is_a?(Op) && peek.value == :+
+      while peek.is_a?(Op) && peek.value == '+'
         left = the_component || fact
         consume # mult
         the_component = Add[left, factor]
@@ -61,7 +61,7 @@ module Elgar
       p :factor
       val = value
       the_factor = nil
-      while peek.is_a?(Op) && peek.value == :*
+      while peek.is_a?(Op) && peek.value == '*'
         left = the_factor || val
         consume # add
         the_factor = Mult[left, value]
@@ -78,7 +78,7 @@ module Elgar
       val = nil
       if num?
         val = consume.value
-        Int[val]
+        Int[val.to_i]
       elsif ident?
         val = consume.value
         CellRef[val]

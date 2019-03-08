@@ -1,23 +1,35 @@
+require_relative './tokens'
+
 module Elgar
   class Lexer
+    include Elgar::Tokens
     def tokenize(str)
       tokens = []
-      # consume tokens...
       scanner = StringScanner.new(str)
       until scanner.eos?
-        # try to parse!!!
-        if res = scanner.scan(/\d+/)
-          tokens.push(Num[res.to_i])
-        elsif res = scanner.scan(/\w+/)
-          tokens.push(Id[res])
-        elsif res = scanner.scan(/[+*]/)
-          tokens.push(Op[res.to_sym])
-        else
+        matched = token_matchers.detect do |matcher, entity|
+          if res = scanner.scan(matcher)
+            tokens.push(entity[res])
+            true
+          end
+        end
+        unless matched
           raise "Tokenization error in string #{str}: unrecognized character... (at pos=#{scanner.pos})"
         end
       end
-      #
       tokens
+    end
+
+    private
+    def token_matchers
+      {
+        /\d+/ => Num,
+        /\w+/ => Id,
+        /[+*]/ => Op,
+        /\(/ => LParen,
+        /\)/ => RParen,
+        /:/ => Colon,
+      }
     end
   end
 end

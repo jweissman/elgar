@@ -1,13 +1,14 @@
 module Elgar
   module Tokens
-    class Num < Struct.new(:value)
-      def inspect; "Tok::Num[#{value}]"; end
+    class Token < Struct.new(:value)
+      def inspect; "#{self.class.name}[tkn='#{value}']" end
     end
-    class Op < Struct.new(:value)
-      def inspect; "Tok::Op[#{value}]"; end
-    end
-    class Id < Struct.new(:value)
-      def inspect; "Tok::Id[#{value}]"; end
-    end
+
+    class Num < Token; end
+    class Op < Token; end
+    class Id < Token; end
+    class LParen < Token; end
+    class RParen < Token; end
+    class Colon < Token; end
   end
 end
