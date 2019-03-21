@@ -1,3 +1,4 @@
+require 'pry'
 require 'elgar/version'
 require 'elgar/tokens'
 require 'elgar/lexer'
@@ -16,6 +17,7 @@ module Elgar
     class CellRef < Struct.new(:row, :column)
       def inspect; "Cell[@#{row}/#{column}]"; end
     end
+
     class Int  < Struct.new(:value)
       def inspect; "Int[#{value}]"; end
     end
@@ -158,8 +160,6 @@ module Elgar
     private
 
     def reduce(ast, ctx={})
-      p :reduce, ctx: ctx
-      puts "===> WOULD REDUCE AST #{ast} IN CTX #{ctx}"
       case ast
       when Add then
         reduce(ast.left, ctx).to_i + reduce(ast.right, ctx).to_i
@@ -171,10 +171,29 @@ module Elgar
         # p ctx: ctx
         # raise "Implement reduce[CellRef]"
         ctx.read([ast.column, ast.row].join)
+      when Funcall then
+        fn_name = ast.func.value.to_sym
+        args = ast.arglist.args.map do |arg|
+          reduce(arg, ctx)
+        end
+        if builtins.has_key?(fn_name)
+          puts "---> Call #{fn_name} with args: #{args}"
+          builtins[fn_name].call(*args)
+        else
+          raise "No such fn with name #{fn_name}"
+        end
       else
-        raise "Not sure what to do with node #{ast}"
+        raise "Calculator#reduce: Implement reduce for #{ast.class.name}"
       end
     end
+
+    def builtins
+      {
+        pow: ->(x,y) { x ** y },
+        sum: ->(*vals) { vals.inject(&:+) }
+      }
+    end
+
   end
 
   class Formula

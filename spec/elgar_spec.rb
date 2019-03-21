@@ -103,6 +103,33 @@ describe Elgar do
           Funcall[ Id['fun'], Arglist[[ Int[1], Int[2] ]]]
         )
       end
+
+      it 'parses a cell address' do
+        parser = Parser.new(
+          tokens: [
+            Id['a1'],
+          ]
+        )
+
+        expect(parser.recognize).to eq(
+          CellRef['a1']
+        )
+      end
+
+      xit 'parses a cell range' do
+        parser = Parser.new(
+          tokens: [
+            Id['a1'], Colon[':'], Id['a3']
+          ]
+        )
+
+        expect(parser.recognize).to eq(
+          CellRange[
+            CellRef['a1'],
+            CellRef['a2']
+          ]
+        )
+      end
     end
   end
 
@@ -114,7 +141,7 @@ describe Elgar do
       expect(calc.evaluate('1*2+3')).to eq('5')
     end
 
-    xit 'performs funcalls' do
+    it 'performs funcalls' do
       calc = Calculator.new
       expect(calc.evaluate('pow(2,3)')).to eq('8')
     end
@@ -153,6 +180,15 @@ describe Elgar do
       sheet.write('3', at: 'A2')
       sheet.write('=A1+A2', at: 'A3')
       expect(sheet.read('A3')).to eq('5')
+    end
+
+    xit 'computes a simple formula with cell ranges' do
+      sheet = Sheet.new('cattus')
+      sheet.write('1', at: 'B1')
+      sheet.write('2', at: 'B2')
+      sheet.write('3', at: 'B3')
+      sheet.write('=sum(B1:B3)', at: 'B4')
+      expect(sheet.read("B4")).to eq('6')
     end
 
     xit 'computes a formula with cell refs and function calls' do
