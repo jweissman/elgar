@@ -92,7 +92,7 @@ describe Elgar do
         )
       end
 
-      it 'parses a cell address' do
+      xit 'parses a cell address' do
         parser = Parser.new(
           tokens: [
             Id['a1'],
@@ -179,7 +179,7 @@ describe Elgar do
       expect(sheet.read("B4")).to eq('15')
     end
 
-    xit 'computes a formula with cell refs and function calls' do
+    it 'computes a formula with cell refs and function calls' do
       sheet = Sheet.new('felis cattus')
       sheet.write('name', at: 'A1')
       sheet.write('age', at: 'A2')

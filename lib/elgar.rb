@@ -47,7 +47,7 @@ module Elgar
 
     private
     def expression
-      p :expr
+      # p :expr
       result = component || factor || value
       if !epsilon?
         raise "Did not fully recognize token stream; parsed: #{result}"
@@ -56,7 +56,7 @@ module Elgar
     end
 
     def funcall
-      p :funcall
+      # p :funcall
       if ident? && peek_next.is_a?(LParen)
         id = consume
         args = arglist
@@ -80,7 +80,7 @@ module Elgar
     end
 
     def component
-      p :component
+      # p :component
       fact = factor
       the_component = nil
       while peek.is_a?(Op) && peek.value == '+'
@@ -92,7 +92,7 @@ module Elgar
     end
 
     def factor
-      p :factor
+      # p :factor
       val = value
       the_factor = nil
       while peek.is_a?(Op) && peek.value == '*'
@@ -108,7 +108,7 @@ module Elgar
     end
 
     def value
-      p :value
+      # p :value
       val = nil
       if num?
         val = consume.value
@@ -184,6 +184,8 @@ module Elgar
       when CellRef then
         # p ctx: ctx
         # raise "Implement reduce[CellRef]"
+        # maybe need to parse this?
+        # hmmm, need to parse and reduce again????
         ctx.read([ast.row, ast.column].join)
       when CellRange then
         start, finish = *ast
@@ -212,8 +214,9 @@ module Elgar
           reduce(arg, ctx)
         end
         if builtins.has_key?(fn_name)
-          puts "---> Call #{fn_name} with args: #{args}"
-          builtins[fn_name].call(*args.flatten.map(&:to_i))
+          params = args.flatten.compact.map(&:to_i) #.map(&:to_f)
+          puts "---> Call #{fn_name} with params: #{params}"
+          builtins[fn_name].call(*params)
         else
           raise "No such fn with name #{fn_name}"
         end
@@ -268,7 +271,7 @@ module Elgar
     def read(address)
       value = database[address]
       puts "---> Sheet #{@name}: read from cell at #{address} => #{value}"
-      if value.start_with?('=')
+      if value && value.start_with?('=')
         # raise "Would compute formula: #{value}"
         compute_formula(value)
       else

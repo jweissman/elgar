@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+  </head>
+  <body>
+    <h1>elgar</h1>
+    <p>hello world!</p>
+    <p>let us build some data together.</p>
+    <div class='sheet'>
+      <% (1..10).each do |col_index| %>
+        <% ('A'..'Z').each do |row_index| %>
+          <span class='cell'>
+            <input
+              type='text'
+              placeholder="<%= row_index %><%= col_index %>"
+              style="width: 24px"
+            >
+            </input>
+          </span>
+        <% end %>
+        <br/>
+      <% end %>
+    </div>
+
+    <script type='text/javascript' src='./app.js'>
+    </script>
+  </body>
+</html>
