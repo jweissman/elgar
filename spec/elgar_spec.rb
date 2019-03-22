@@ -5,19 +5,7 @@ include Elgar::Tokens
 include Elgar::ASTNodes
 
 describe Elgar do
-
-  describe TokenStream do
-    it 'peeks/consumes' do
-      tkns = TokenStream.new(tokens: ['hello', 'world'])
-      expect(tkns.peek).to eq('hello')
-      expect(tkns.consume).to eq('hello')
-      expect(tkns.peek).to eq('world')
-    end
-  end
-
   describe Parser do
-
-
     describe 'assembles ast from tokens' do
       it 'recognizes a single number' do
         parser = Parser.new(tokens: [
@@ -116,7 +104,7 @@ describe Elgar do
         )
       end
 
-      xit 'parses a cell range' do
+      it 'parses a cell range' do
         parser = Parser.new(
           tokens: [
             Id['a1'], Colon[':'], Id['a3']
@@ -126,7 +114,7 @@ describe Elgar do
         expect(parser.recognize).to eq(
           CellRange[
             CellRef['a1'],
-            CellRef['a2']
+            CellRef['a3']
           ]
         )
       end

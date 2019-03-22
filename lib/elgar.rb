@@ -18,6 +18,10 @@ module Elgar
       def inspect; "Cell[@#{row}/#{column}]"; end
     end
 
+    class CellRange < Struct.new(:range_start, :range_end)
+      def inspect; "CellRange[#{range_start}, #{range_end}]" end
+    end
+
     class Int  < Struct.new(:value)
       def inspect; "Int[#{value}]"; end
     end
@@ -54,14 +58,9 @@ module Elgar
     def funcall
       p :funcall
       if ident? && peek_next.is_a?(LParen)
-        # found an id, we need arglist
         id = consume
-        # if arglist?
         args = arglist
         Funcall[id, args]
-        # else
-        #   id
-        # end
       end
     end
 
@@ -76,7 +75,6 @@ module Elgar
             _comma = consume
           end
         end
-        # _rparen = consume
         Arglist[args]
       end
     end
@@ -118,6 +116,14 @@ module Elgar
       elsif ident?
         if peek_next.is_a?(LParen) # funcall?
           funcall
+        elsif peek_next.is_a?(Colon) # cell range
+          lval = consume.value
+          _colon = consume #
+          unless ident?
+            raise "Expected id to close cell range but saw #{peek.value}"
+          end
+          rval = consume.value
+          CellRange[CellRef[lval], CellRef[rval]]
         else
           # assume cell ref??
           val = consume.value
@@ -127,6 +133,9 @@ module Elgar
         val = peek
         raise "Expected number/id but got #{val} [#{val.inspect} (#{val.class.name})]"
       end
+    end
+
+    def cell_range
     end
 
     def value?
