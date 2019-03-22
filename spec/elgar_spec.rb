@@ -16,9 +16,9 @@ describe Elgar do
 
       it 'recognizes a literal identifier' do
         parser = Parser.new(tokens: [
-          Id['xyz']
+          Id['xyz123']
         ])
-        expect(parser.recognize).to eq(CellRef['xyz'])
+        expect(parser.recognize).to eq(CellRef['xyz', '123'])
       end
 
       it 'recognizes a simple add operation' do
@@ -100,7 +100,7 @@ describe Elgar do
         )
 
         expect(parser.recognize).to eq(
-          CellRef['a1']
+          CellRef['a', '1']
         )
       end
 
@@ -113,8 +113,8 @@ describe Elgar do
 
         expect(parser.recognize).to eq(
           CellRange[
-            CellRef['a1'],
-            CellRef['a3']
+            CellRef['a', '1'],
+            CellRef['a', '3']
           ]
         )
       end
@@ -170,13 +170,13 @@ describe Elgar do
       expect(sheet.read('A3')).to eq('5')
     end
 
-    xit 'computes a simple formula with cell ranges' do
+    it 'computes a simple formula with cell ranges' do
       sheet = Sheet.new('cattus')
-      sheet.write('1', at: 'B1')
-      sheet.write('2', at: 'B2')
-      sheet.write('3', at: 'B3')
+      sheet.write('6', at: 'B1')
+      sheet.write('5', at: 'B2')
+      sheet.write('4', at: 'B3')
       sheet.write('=sum(B1:B3)', at: 'B4')
-      expect(sheet.read("B4")).to eq('6')
+      expect(sheet.read("B4")).to eq('15')
     end
 
     xit 'computes a formula with cell refs and function calls' do

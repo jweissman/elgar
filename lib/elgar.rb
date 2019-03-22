@@ -15,7 +15,7 @@ module Elgar
 
   module ASTNodes
     class CellRef < Struct.new(:row, :column)
-      def inspect; "Cell[@#{row}/#{column}]"; end
+      def inspect; "Cell[@#{row}-#{column}]"; end
     end
 
     class CellRange < Struct.new(:range_start, :range_end)
@@ -117,17 +117,15 @@ module Elgar
         if peek_next.is_a?(LParen) # funcall?
           funcall
         elsif peek_next.is_a?(Colon) # cell range
-          lval = consume.value
-          _colon = consume #
+          lval = cell_ref
+          _colon = consume
           unless ident?
             raise "Expected id to close cell range but saw #{peek.value}"
           end
-          rval = consume.value
-          CellRange[CellRef[lval], CellRef[rval]]
+          rval = cell_ref
+          CellRange[lval, rval]
         else
-          # assume cell ref??
-          val = consume.value
-          CellRef[val]
+          cell_ref
         end
       else
         val = peek
@@ -135,7 +133,14 @@ module Elgar
       end
     end
 
-    def cell_range
+    def cell_ref
+      if ident?
+        val = consume.value
+        alpha_num = /([a-zA-Z]+)([0-9]+)/
+        matches = val.match(alpha_num)
+        row, column = matches[1,2]
+        CellRef[row, column]
+      end
     end
 
     def value?
@@ -179,7 +184,28 @@ module Elgar
       when CellRef then
         # p ctx: ctx
         # raise "Implement reduce[CellRef]"
-        ctx.read([ast.column, ast.row].join)
+        ctx.read([ast.row, ast.column].join)
+      when CellRange then
+        start, finish = *ast
+        cell_names = []
+        if start.column == finish.column
+          # number is same, letter is different
+          letters = start.row.upto(finish.row)
+          cell_names = letters.map{ |l| "#{l}#{start.column}" }
+        elsif start.row == finish.row
+          row = start.row
+          # ...
+          cell_names = [row, start.column].join.upto([row, finish.column].join)
+        else
+          raise "Cell range must be linear"
+        end
+
+        # binding.pry
+        range_elems = cell_names.map do |address|
+          ctx.read(address)
+        end
+        # binding.pry
+        range_elems
       when Funcall then
         fn_name = ast.func.value.to_sym
         args = ast.arglist.args.map do |arg|
@@ -187,7 +213,7 @@ module Elgar
         end
         if builtins.has_key?(fn_name)
           puts "---> Call #{fn_name} with args: #{args}"
-          builtins[fn_name].call(*args)
+          builtins[fn_name].call(*args.flatten.map(&:to_i))
         else
           raise "No such fn with name #{fn_name}"
         end
@@ -241,7 +267,7 @@ module Elgar
 
     def read(address)
       value = database[address]
-      puts "---> Sheet #{@name}: read from cell at #{address}"
+      puts "---> Sheet #{@name}: read from cell at #{address} => #{value}"
       if value.start_with?('=')
         # raise "Would compute formula: #{value}"
         compute_formula(value)
